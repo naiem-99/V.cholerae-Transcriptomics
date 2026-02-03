@@ -1,6 +1,8 @@
 
-# --------Differential Expression Analysis(limma) ---------------
+# ---------------------------Differential Expression Analysis(limma) -----------------------------------------
+
 set.seed(123) 
+
 # Check if the data loaded correctly
 head(Merged_Data_paired_count)
 head(Paired_Sample)
@@ -19,13 +21,14 @@ drop <- which(apply(cpm(dge), 1, max) < cutoff)
 d <- dge[-drop,] 
 dim(d)
 #-----------------------------------------------
-#--------------Make design matrix---------------
+#--------------Make design matrix--------------------------------------------------------------
 ##https://bioconductor.org/packages/release/workflows/vignettes/RNAseq123/inst/doc/designmatrices.html
 group <- factor(Paired_Sample$Sample_type, 
                 levels = c("Stool","Vomit"))
 design <- model.matrix(~0 + group)
 design
 colnames(design) <- levels(group)
+
 #--------Transform counts using voom for linear modeling--------
 v <- voom(d, design, plot = T)
 v
@@ -38,10 +41,12 @@ contrast_matrix
 # ------------Apply contrasts to the model----------------------
 fit2 <- contrasts.fit(fit, contrast_matrix)
 fit2 
+
 # -----------Compute empirical Bayes statistics-----------------
 fit2 <- eBayes(fit2)
 # -----------Extract results for each contrast------------------
 Stool_vs_Vomit_paired  <- topTable(fit2, coef="Stool_vs_Vomit", adjust="BH",sort.by = "logFC",n = Inf)
+
 # -----------Create a new column indicating the expreesion type ------------------
 Stool_vs_Vomit_paired  <-Stool_vs_Vomit_paired%>% mutate(Expression = 
                                          case_when(logFC >=0.5 & P.Value < 0.05 ~ "Up-regulated in Stool",
@@ -165,7 +170,7 @@ ht2<-draw(ht,heatmap_legend_side = "bottom", annotation_legend_side = "bottom", 
 ht2
 
 #_-------------Save the result---------------------------
-png("1.Final_Paired_results/Stool_vs_Vomit_Paired_Heatmap.png", width = 7,height = 7,units = "in", res = 1200)
+png("1.Final_Paired_results/Stool_vs_Vomit_Paired_Heatmap.png", width = 7,height = 7,units = "in", res = 400)
 
 draw(ht,heatmap_legend_side = "bottom",annotation_legend_side = "bottom", merge_legends = TRUE)
 
