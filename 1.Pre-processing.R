@@ -54,11 +54,4 @@ write.csv(Merged_Data_paired_count,"1.Final_Paired_results/Merged_Data_paired_co
 #n_distinct(Merged_Data_paired_count$GENEID)
 #nrow(Merged_Data)
 #n_distinct(Merged_Data$Geneid)
-#Step P02 : Preparing the paired sample list column
-Paired_Sample <- data.frame(
-  Sample_type = c("Stool", "Stool", "Stool", "Stool", "Stool",
-                  "Vomit", "Vomit", "Vomit", "Vomit", "Vomit"),
-  Sample = c("S21", "S23", "S24", "S25", "S26",
-             "S30", "S33", "S34", "S35", "S37"))
 
-Paired_Sample
