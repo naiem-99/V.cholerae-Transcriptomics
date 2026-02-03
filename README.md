@@ -5,5 +5,4 @@ Comparative transcriptomic profiling of V. cholerae
 #author: - name: "Md Naiem Hossain"
 #affiliation: "Research Officer, icddr,b"
 
-#------------------------------------------------------------------------------------------------------------------------------------------------#
   
