@@ -4,7 +4,7 @@ library(rtracklayer)
 library(dplyr)
 library(ggplot2)
 library(ggrepel)
-Stool_vs_Vomit_paired<-read.csv("D:/ICDDRB_Feb/1.Sadia_Apu_RNAseq/1.Final_VC_RNAseq_10_11/1.Final_Paired_results/Stool_vs_Vomit_paired_DEgs.csv",check.names = F)#%>%dplyr::rename(GeneID = GENEID)
+Stool_vs_Vomit_paired<-read.csv("D:/ICDDRB_Feb/1.RNAseq/1.Final_VC_RNAseq_10_11/1.Final_Paired_results/Stool_vs_Vomit_paired_DEgs.csv",check.names = F)#%>%dplyr::rename(GeneID = GENEID)
 
 Stool_vs_Vomit_paired
 # Load GTF file
