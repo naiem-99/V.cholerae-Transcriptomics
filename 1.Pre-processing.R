@@ -1,12 +1,4 @@
 
-#------ Extension anlysis of the project titled "Diversity of Vibrio cholerae O1 through the human gastrointestinal tract during cholera"--------#
-#---
-#title: "Stool vs Vomit RNA-seq Report of SMIC Study"
-#author: - name: "Md Naiem Hossain"
-#affiliation: "Research Officer, icddr,b"
-
-#---
-  
 # Set the working directory
 
 setwd("D:/ICDDRB_Feb/1.RNAseq/1.Final_VC_RNAseq_10_11")
