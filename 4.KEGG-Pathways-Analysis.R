@@ -18,7 +18,7 @@ geneList <- sort(geneList, decreasing = TRUE)
 options(timeout = 1000)
 #---------------Run GSEA for kegg pathway-----------------------------------
 
-gseKEGG <- gseKEGG(geneList=geneList,organism = "vch",keyType = "kegg", minGSSize = 15,verbose = T)
+gseKEGG <- gseKEGG(geneList=geneList,organism = "vch",keyType = "kegg", minGSSize = 10,verbose = T)
 
 saveRDS(gseKEGG,"1.Final_Paired_results/kk2_gseKEGG_stool_vomit_paired.rds")
 
