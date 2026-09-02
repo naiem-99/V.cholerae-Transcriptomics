@@ -1,105 +1,93 @@
+# ─────────────────────────────────────────────────────────────────────────── #
+#  SECTION 15 │ FIGURE 4 — KEGG GSEA BARPLOT                                 #
+# ─────────────────────────────────────────────────────────────────────────── #
 
-#----------------------------- KEGG Geneset Enrichment Analysis----------------------------------------
-#load required library 
-library(clusterProfiler)
-library(ggplot2)
-library(scales)  # for nice formatting of colors
-library(ggplot2)
-library(scales)
-library(ggplot2)
-library(scales)
-library(enrichplot)
-#------------------------------------------------
-# 1. Create a named numeric vector of logFC
-geneList <- setNames(Stool_vs_Vomit_paired$logFC, Stool_vs_Vomit_paired$GENEID)
+geneList_gsea <- DE_results %>%arrange(desc(logFC)) %>%dplyr::select(GENEID, logFC) %>%tibble::deframe()
 
-# 2. Sort in decreasing order (highest logFC first)
-geneList <- sort(geneList, decreasing = TRUE)
 options(timeout = 1000)
-#---------------Run GSEA for kegg pathway-----------------------------------
 
-gseKEGG <- gseKEGG(geneList=geneList,organism = "vch",keyType = "kegg", minGSSize = 10,verbose = T)
+rds_path <- "1.Final_Paired_results/gseKEGG_result.rds"
 
-saveRDS(gseKEGG,"1.Final_Paired_results/kk2_gseKEGG_stool_vomit_paired.rds")
+gseKEGG_res <- gseKEGG(
+  geneList     = geneList_gsea,
+  organism     = "vch",
+  keyType      = "kegg",
+  minGSSize    = 10,
+  pvalueCutoff = 1,
+  verbose      = FALSE)
 
-#----------------------------------------------------------------------------
-gseKEGG <-readRDS("1.Final_Paired_results/kk2_gseKEGG_stool_vomit_paired.rds")
-GSEA_result <-as.data.frame(gseKEGG@result)
-head(GSEA_result)
-write.csv(GSEA_result,"1.Final_Paired_results/GSEA_result.csv")
+saveRDS(gseKEGG_res, rds_path)
 
+GSEA_table <- as.data.frame(gseKEGG_res@result) %>% mutate(Group = if_else(NES > 0, "Stool", "Vomit"))
 
+GSEA_table[1:1,]
 
-gseaplot(gseKEGG,geneSetID = 3,title = gseKEGG@result$Description[3])
-gseaplot( gseKEGG, geneSetID = "vch02020", title = "Two-component system")
+write.csv(GSEA_table,"1.Final_Paired_results/GSEA_result.csv",row.names = FALSE)
 
+#--------------------------------------------------------------------------------#
 
-#-------------------------------------------------------------------------------------
+gsea_plot_df <- GSEA_table %>%
+  mutate(Pathway = gsub(" - .*$", "", Description),
+         logP    = -log10(pvalue)) %>%
+  filter(pvalue < 0.05) %>%
+  {
+    bind_rows(
+      filter(., NES > 0) %>% arrange(pvalue, desc(NES)),   # most significant first within Stool
+      filter(., NES < 0) %>% arrange(pvalue,      NES)     # most significant first within Vomit
+    )
+  } %>%
+  arrange(NES)
 
-# Convert enrichment results to a data frame
-df_gseKEGG_stool_vomit_paired <- as.data.frame(gseKEGG)
+gsea_plot_df[1:1,]
 
-Processed_gseKEGG <- df_gseKEGG_stool_vomit_paired %>% mutate(Description = gsub(" - .*", "", Description)  # remove everything after " - ")
-Processed_gseKEGG
+dim(gsea_plot_df)
+table(gsea_plot_df$Group)
 
-#Processed_gseKEGG$qvalue_scaled <- Processed_gseKEGG$qvalue / max(abs(Processed_gseKEGG$qvalue))
+write.csv(gsea_plot_df,"1.Final_Paired_results/gsea_plot_df.csv",row.names = FALSE)
+gsea_plot_df <-read.csv("D:/ICDDRB_Feb/1.Sadia_Apu_RNAseq/1.Final_VC_RNAseq_10_11/5.Final_Analysis_paired/1.Final_Paired_results/gsea_plot_df.csv",check.names = F)
 
-y<-ggplot(Processed_gseKEGG, aes(x = reorder(Description, NES), y = NES, fill = log10(p.adjust))) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  scale_fill_gradient(low = "#1E90FF" ,high = "#BA55D3",name = "log10(p.adjust)")+
-  labs(
-    title = "Enriched Pathways in Stool and Vomit ",
-    x = "KEGG Pathway",
-    y = "NES"
-  ) +
-  theme_minimal(base_size = 14) +
+#-----------------------------------------------------------------------------------------
+fig_gsea <- ggplot(gsea_plot_df,
+                   aes(x = reorder(Pathway, NES), y = NES, fill = logP))+
+                   #aes(x = reorder(Pathway, logP * sign(NES)), y = NES, fill = logP))+
+  
+  geom_col(width = 0.75, colour = "black", linewidth = 0.3) +
+  
+  geom_hline(yintercept = 0, linewidth = 0.5, colour = "black") +
+  
+  coord_flip(clip = "off") +
+  
+  annotate("text",
+           x = Inf, y = max(gsea_plot_df$NES) * 0.5,
+           label = "Stool", size = 5, fontface = "bold",
+           colour = "black", hjust = 0.5, vjust = -0.8) +
+  
+  annotate("text",
+           x = Inf, y = min(gsea_plot_df$NES) * 0.5,
+           label = "Vomit", size = 5, fontface = "bold",
+           colour = "black", hjust = 0.5, vjust = -0.8) +
+  
+  scale_fill_gradient(low  = "#fff5eb", high = "#6a00a8",
+                      name = expression(-log[10]~italic(p)~"-value")) +
+  
+  scale_y_continuous(breaks = pretty_breaks(n = 5)) +
+  
+  labs(x = NULL, y = "Normalised Enrichment Score (NES)") +
+  
+  theme_classic(base_size = 14) +
   theme(
-    axis.text.y = element_text(size = 12),
-    axis.title = element_text(size = 14, face = "bold"),
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
-    legend.title = element_text(size = 12),
-    legend.text = element_text(size = 10)
-  )+theme(panel.border = element_rect(fill=NA,color="black", size=1, linetype="solid")) 
-x
-y
-#---------------------------2nd try--------------------------
-fill_range <- range(log10(Processed_gseKEGG$p.adjust), na.rm = TRUE)
+    axis.title.x      = element_text(face = "bold", size = 14),
+    axis.text         = element_text(size = 11, colour = "black"),
+    panel.border      = element_rect(colour = "black", fill = NA, linewidth = 0.8),
+    legend.title      = element_text(face = "bold"),
+    legend.text       = element_text(size = 10),
+    legend.position   = "right",
+    legend.key.width  = unit(0.35, "cm"),
+    legend.key.height = unit(0.9,  "cm"),
+    plot.caption      = element_text(size = 9, face = "italic"),
+    plot.margin       = margin(t = 25, r = 10, b = 5, l = 5, unit = "pt"))
 
-y <- ggplot(
-  Processed_gseKEGG,
-  aes(
-    x = reorder(Description, NES),
-    y = NES,
-    fill = log10(p.adjust)
-  )
-) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  scale_fill_gradient(
-    low = "#1E90FF",
-    high = "#BA55D3",
-    breaks = fill_range,     # 🔹 show only min & max
-    labels = round(fill_range, 2),
-    name = "log10(p.adjust)"
-  ) +
-  labs(
-    title = "Enriched Pathways in Stool and Vomit ",
-    x = "KEGG Pathway",
-    y = "NES"
-  ) +
-  theme_minimal(base_size = 14) +
-  theme(
-    axis.text.y = element_text(size = 12),
-    axis.title = element_text(size = 14, face = "bold"),
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
-    panel.border = element_rect(fill = NA, color = "black", size = 1)
-  )
+fig_gsea
 
-y
-
-ggsave(filename = "1.Final_Paired_results/Stool_vs_Vomit_GSEA_paired_2.png", width = 8, height = 6, units = "in",dpi= 1000) 
-
-
-#-----------------------------End of KEGG pathways----------------------------
-
+ggsave("1.Final_Paired_results/Fig4_GSEA.png",fig_gsea, width = 10, height = 12, units = "in", dpi = 1200)
+#---------------------------------------------------------------------------------------------------------#
