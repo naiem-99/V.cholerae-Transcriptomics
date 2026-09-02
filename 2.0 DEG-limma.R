@@ -90,7 +90,6 @@ library(readr)
 # 1. Load the data using read_csv (better for tidyverse)
 Table_S2 <- read_csv("D:/ICDDRB_Feb/1.Sadia_Apu_RNAseq/1.Final_VC_RNAseq_10_11/5.Final_Analysis_paired/Revisions_to_RNAseq_V._cholerae_paper/table_s2-annotated-2026.07.21.csv")
 
-# 2. OPTIONAL: Run this if you still get an error to inspect the names
 # names(Table_S2)
 
 # 3. Select and rename
