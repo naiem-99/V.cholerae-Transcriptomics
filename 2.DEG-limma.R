@@ -105,3 +105,107 @@ DE_results <- DE_results %>% inner_join(Table_S2, by="GENEID")%>%
 
 write.csv(DE_results, "1.Final_Paired_results/Stool_vs_Vomit_paired_DEgs.csv", row.names = FALSE)
 #------------------------------------------------------------------------------------------------
+
+# ─────────────────────────────────────────────────────────────────────────── #
+#  Volcano labels — top 10 Stool + top 1 Vomit + 4 specific genes             #
+# ─────────────────────────────────────────────────────────────────────────── #
+
+# 1. Top 15 increased in stool
+label_stool <- DE_results %>%
+  filter(Expression == "Increased in Stool") %>%
+  arrange(adj.P.Val) %>%
+  head(15)
+
+# 2. Top 1 increased in vomit
+label_vomit <- DE_results %>%
+  filter(Expression == "Increased in Vomit") %>%
+  arrange(adj.P.Val) %>%
+  head(1)
+
+# 3. Four specific genes of interest
+specific_genes <- DE_results %>%
+  filter(`Gene Symbol` %in% c("flaC", "dctP", "ompW", "flaG"))
+
+# 4. Merge and remove duplicates
+volcano_labels <- bind_rows(label_stool, label_vomit, specific_genes) %>%
+  distinct(`Gene Symbol`, .keep_all = TRUE)
+
+# ── Colour / size / alpha scales ─────────────────────────────────────────────
+cols_vol <- c("Increased in Stool" = COL_STOOL,
+              "NS"                 = COL_STABLE,
+              "Increased in Vomit" = COL_VOMIT)
+
+sizes_vol <- c("Increased in Stool" = 3,
+               "NS"                 = 3,
+               "Increased in Vomit" = 3)
+
+alphas_vol <- c("Increased in Stool" = 1.00,
+                "NS"                 = 0.47,
+                "Increased in Vomit" = 1.00)
+
+# ── Plot ──────────────────────────────────────────────────────────────────────
+fig_volcano <- ggplot(DE_results,
+                      aes(x     = logFC,
+                          y     = -log10(adj.P.Val),
+                          fill  = Expression,
+                          size  = Expression,
+                          alpha = Expression)) +
+  
+  geom_point(shape = 21, colour = "black") +
+  
+  geom_hline(yintercept = -log10(0.054),
+             linewidth  = 0.4,
+             linetype   = "dashed") +
+  
+  # Gene name labels — stacked above dots, thin grey connector lines
+  geom_text_repel(
+    data                = volcano_labels,
+    mapping             = aes(x = logFC, y = -log10(adj.P.Val),
+                              label = `Gene Symbol`),
+    inherit.aes         = FALSE,
+    size                = 3.4,
+    fontface            = "bold.italic",
+    colour              = "black",
+    nudge_y             = 0.5,           # push labels upward
+    hjust               = 0.5,           # centre-align text
+    direction           = "y",           # stack vertically only
+    segment.colour      = "gray",        # subtle grey connector
+    segment.size        = 0.3,
+    min.segment.length  = 0,
+    force               = 3,
+    seed                = 42,
+    max.overlaps        = Inf
+  ) +
+  
+  scale_fill_manual(
+    values = cols_vol,
+    breaks = c("Increased in Vomit", "NS", "Increased in Stool")
+  ) +
+  scale_size_manual(values  = sizes_vol,  guide = "none") +
+  scale_alpha_manual(values = alphas_vol, guide = "none") +
+  
+  guides(fill = guide_legend(
+    override.aes = list(shape = 21, alpha = 1, size = 4,
+                        colour = "black", label = "")
+  )) +
+  
+  scale_x_continuous(breaks = seq(-6, 6, 2), limits = c(-6.0, 7.0)) +
+  
+  scale_y_continuous(
+    breaks = c(0, 0.5, 1.0, 1.5, 2.0),
+    limits = c(0, 2.4),                  # taller y-axis to fit stacked labels
+    expand = expansion(mult = c(0.01, 0.05))
+  ) +
+  
+  labs(x    = expression(log[2]~"Fold Change"),
+       y    = expression(-log[10]~"adj."~italic(P)),
+       fill = "Expression") +
+  
+  plot_theme
+
+fig_volcano
+
+ggsave("1.Final_Paired_results/Fig2_Volcano.png",
+       fig_volcano, width = 8, height = 7.5, units = "in", dpi = 1200)
+
+#-------------------------------------
