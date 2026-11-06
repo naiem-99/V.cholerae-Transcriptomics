@@ -1,6 +1,4 @@
-# ─────────────────────────────────────────────────────────────────────────── #
-#  SECTION 1 │ WORKSPACE & PACKAGES                                           #
-# ─────────────────────────────────────────────────────────────────────────── #
+# ── Section 1 │ Workspace & packages ──────────────────────────────────────────
 
 setwd("D:/ICDDRB_Feb/1.Sadia_Apu_RNAseq/1.Final_VC_RNAseq_10_11/5.Final_Analysis_paired")
 
@@ -18,23 +16,23 @@ rm(list = ls()); gc()
 
 dir.create("1.Final_Paired_results", showWarnings = FALSE)
 
-# ─────────────────────────────────────────────────────────────────────────── #
-#  SECTION 2 │ DATA LOADING                                                   #
-# ─────────────────────────────────────────────────────────────────────────── #
-#---------------------- Read the count data ---------------------------------------------
+# ── Section 2 │ Data loading ──────────────────────────────────────────────────
+
+# Read the count data
+
 name_map <- c("S21" = "S01", "S23" = "S02", "S24" = "S03", "S25" = "S04", "S26" = "S05",
               "S30" = "V01", "S33" = "V02", "S34" = "V03", "S35" = "V04", "S37" = "V05")
 
 count_data_all <- read.csv("D:/ICDDRB_Feb/1.Sadia_Apu_RNAseq/1.Final_VC_RNAseq_10_11/5.Final_Analysis_paired/Raw_Files/ASVS.counts.genes.csv", check.names = FALSE) %>%
   rename_with(~ ifelse(.x %in% names(name_map), name_map[.x], .x))
 
+# Read the annotation file
 
-#--------------------- Read the annotation file -------------------------------------------
 annotation_file <- read.csv("D:/ICDDRB_Feb/1.Sadia_Apu_RNAseq/1.Final_VC_RNAseq_10_11/5.Final_Analysis_paired/Raw_Files/VC_genes-Ng-file.csv", check.names = FALSE)%>% 
                    distinct(`N16961 locus`, .keep_all = T)
 
+# Read the Uniprot proteome file
 
-#-------------------Read the Uniprot proteome file------------------------------------------------------------
 uniprotkb_proteome_file <- read.csv(
   "D:/ICDDRB_Feb/1.Sadia_Apu_RNAseq/1.Final_VC_RNAseq_10_11/5.Final_Analysis_paired/Raw_Files/uniprotkb_proteome_UP000000584_2026_06_17.csv", check.names = FALSE) %>%
   dplyr::select(`Protein names`, `Gene Names`) %>%
@@ -47,10 +45,8 @@ uniprotkb_proteome_file <- read.csv(
 
 uniprotkb_proteome_file[1:5,]
 
-#-------------------------------------------------------------------------------
-# ─────────────────────────────────────────────────────────────────────────── #
-#  SECTION 3 │ MERGE & ANNOTATE                                               #
-# ─────────────────────────────────────────────────────────────────────────── #
+# ── Section 3 │ Merge & annotate ──────────────────────────────────────────────
+
 Merged_Data2 <- count_data_all %>%
   inner_join(annotation_file, by = "Geneid") %>%
   mutate(GENEID = `N16961 locus`) %>%as.data.frame() %>%
@@ -63,8 +59,8 @@ Merged_Data2[1:5,]
 
 write.csv(Merged_Data2, "D:/ICDDRB_Feb/1.Sadia_Apu_RNAseq/1.Final_VC_RNAseq_10_11/5.Final_Analysis_paired/Merged_Data2.csv", row.names = FALSE)
 
-#----------------------------------------------------------------------------
 # Gene symbol lookup
+
 gene_symbols <- Merged_Data2 %>%
   distinct(GENEID, .keep_all = TRUE) %>%
   mutate(
@@ -81,9 +77,7 @@ gene_symbols <- Merged_Data2 %>%
 
 gene_symbols[1:5,]
 
-# ─────────────────────────────────────────────────────────────────────────── #
-#  SECTION 4 │ PAIRED COUNT MATRIX                                            #
-# ─────────────────────────────────────────────────────────────────────────── #
+# ── Section 4 │ Paired count matrix ───────────────────────────────────────────
 
 Merged_Data_paired_count <- Merged_Data2 %>%dplyr::select(GENEID,S01, S02, S03, S04, S05,V01, V02, V03, V04, V05) %>% distinct(GENEID, .keep_all = TRUE)
 
@@ -94,4 +88,3 @@ Merged_Data_paired_count[1:5,]
 stopifnot("Column order mismatch!" = all(colnames(Merged_Data_paired_count)[-1] == Paired_Sample$Sample))
 
 write.csv(Merged_Data_paired_count,"1.Final_Paired_results/Merged_Data_paired_count.csv", row.names = FALSE)
-#-----------------------------------------------------------------------------------------------------------------#
