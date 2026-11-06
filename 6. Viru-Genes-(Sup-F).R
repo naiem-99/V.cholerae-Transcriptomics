@@ -1,6 +1,5 @@
- ═══════════════════════════════════════════════════════════════════════════ #
-#  SECTION 17 │ SUPPLEMENTAL FIGURE — VIRULENCE GENE EXPRESSION              #
-# ═══════════════════════════════════════════════════════════════════════════ #
+# ── Section 17 │ Supplemental figure — Virulence gene expression ──────────────
+
 vir_genes  <- c("VC_1457", "VC_1456", "VC_0828", "VC_0838")
 vir_labels <- c("VC_1457" = "ctxA", "VC_1456" = "ctxB",
                 "VC_0828" = "tcpA", "VC_0838" = "toxT")
@@ -12,6 +11,7 @@ patient_cols <- c("P01" = "#2ca02c",
                   "P05" = "#17becf")
 
 # Pull raw counts → log2(x+1) → long format → attach metadata
+
 vir_df <- Merged_Data2 %>% dplyr::select(GENEID,
                 S01, S02, S03, S04, S05,
                 V01, V02, V03, V04, V05,GeneName_Merged)%>%
@@ -22,15 +22,13 @@ vir_df <- Merged_Data2 %>% dplyr::select(GENEID,
          mutate(Gene = factor(vir_labels[GENEID], levels = c("ctxA","ctxB","tcpA","toxT")),
          Condition = factor(Sample_type, levels = c("Vomit","Stool")))
 
-
-
 vir_df[1:10,]
 
 fig_virulence <- ggplot(vir_df,aes(x     = Condition,
                             y     = log2count,
                             colour = Patient,
                             group  = Patient)) +
-  
+
   # Black line connecting each patient's Vomit → Stool
   geom_line(colour = "black", linewidth = 0.5, alpha = 0.7) +
   # Triangle (17) for Vomit, circle (16) for Stool; coloured by patient
@@ -54,7 +52,7 @@ fig_virulence <- ggplot(vir_df,aes(x     = Condition,
 fig_virulence
 ggsave("1.Final_Paired_results/FigS1_Virulence_Genes01.png",fig_virulence, width = 10, height = 5, units = "in", dpi = 1200)
 
-#-----Run Wilcoxon signed-rank test for each gene (paired = TRUE)----------
+# Run Wilcoxon signed-rank test for each gene (paired = TRUE)
 
 vir_stats <- vir_df %>%group_by(Gene)%>%summarise(p_value = wilcox.test(
             log2count[Condition == "Vomit"],
@@ -70,7 +68,7 @@ vir_stats <- vir_df %>%group_by(Gene)%>%summarise(p_value = wilcox.test(
       TRUE            ~ paste0("p = ", round(p_value, 2))))
 
 print(vir_stats)
-#-------------------------------------------------------------#
+
 fig_virulence <- fig_virulence +geom_text(
                   data  = vir_stats,
                   mapping     = aes(x = 1.5,
@@ -81,7 +79,7 @@ fig_virulence <- fig_virulence +geom_text(
                   vjust       = 1.5,
                   fontface    = "bold",
                   colour      = "black")
-#---------------------------------------------------------------#
+
 fig_virulence
-#-------------------------------------------------------------#
+
 ggsave("1.Final_Paired_results/FigS1_Virulence_Genes.png",fig_virulence, width = 10, height = 5, units = "in", dpi = 1200)
