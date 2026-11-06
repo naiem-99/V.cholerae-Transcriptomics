@@ -1,8 +1,6 @@
+# ── Section 16 │ Figure 5 — Genomic position plot ─────────────────────────────
 
-# ─────────────────────────────────────────────────────────────────────────── #
-#  SECTION 16 │ FIGURE 5 — GENOMIC POSITION PLOT                             #
-#  Pathogenicity islands shown as shaded regions with legend labels           #
-# ─────────────────────────────────────────────────────────────────────────── #
+# Pathogenicity islands shown as shaded regions with legend labels
 
 gtf_all   <- rtracklayer::import("D:/ICDDRB_Feb/1.Sadia_Apu_RNAseq/1.Final_VC_RNAseq_10_11/5.Final_Analysis_paired/Raw_Files/GCA_013085075.1_ASM1308507v1_genomic.gtf")
 
@@ -31,24 +29,21 @@ res_genome <- DE_results %>%left_join(gene_coords_full, by = "GENEID") %>%
 
 write.csv(res_genome, "1.Final_Paired_results/res_genome.csv", row.names = FALSE)
 
-
 res_genome <-read.csv("1.Final_Paired_results/res_genome.csv", check.names = F)
-# ── Top gene labels ──────────────────────────────────────────────────────────
+
+# Top gene labels
 
 label_genome <- res_genome %>%filter(Expression %in% c("Increased in Stool", "Increased in Vomit")) 
 
-
-# ── Pathogenicity island coordinates ─────────────────────────────────────────
+# Pathogenicity island coordinates
 # Computed from res_genome using Pathogenicity Island column from Table_S2
 # Factor levels control legend order
 
 island_colours <- c("VPI-I"  = "#fbb4d4","VPI-II" = "#e7298a",
                     "VSP-I"  = "#b3cde3","VSP-II" = "#1874cd")
 
-#---------------------------------------------------------------------
-
-#-----------------------------------------------------------------------
 # Check which boundary genes exist in res_genome
+
 boundary_check <- c( # For VPI-1
                      "VC_0817","VC_0818",
                     "VC_0846","VC_0847",
@@ -67,7 +62,6 @@ res_genome_island<-res_genome %>%
   dplyr::select(GENEID, Chr, Start, Stop, `Pathogenicity Island`) %>%
   arrange(GENEID)%>%as.data.frame()
 
-
 res_genome_island
 write.csv(res_genome_island, "1.Final_Paired_results/res_genome_island.csv", row.names = FALSE)
 
@@ -78,11 +72,8 @@ islands <- data.frame(Chr    = "CP047295.1",Island = factor(
 
 print(islands)
 write.csv(islands, "1.Final_Paired_results/islands.csv", row.names = FALSE)
-#-------------------------------------------------------------------------------
-#---------------------------------------------------------------------------
 
-#---------------------------------------------------------------
-#PLOT COLOURS & THEME                                           #
+# ── Plot colours & theme ──────────────────────────────────────────────────────
 
 COL_STOOL  <- "#FF1493"
 COL_VOMIT  <- "#26b3ff"
@@ -95,10 +86,12 @@ plot_theme <- theme_bw() +
     legend.text      = element_text(size = 16),
     legend.position  = "bottom",
     panel.grid.minor = element_blank())
-# ── Plot ──────────────────────────────────────────────────────────────────────
+
+# Plot
+
 fig_genome <- ggplot(res_genome,
                      aes(x = Mid_gene, y = logFC, colour = Expression)) +
-  
+
   # Island shaded rectangles — fill mapped to Island for legend
   geom_rect(data        = islands,
             aes(xmin  = xmin,
@@ -109,7 +102,7 @@ fig_genome <- ggplot(res_genome,
             inherit.aes = FALSE,
             alpha       = 0.30,
             colour      = NA) +
-  
+
   # Island border lines
   geom_vline(data        = islands,
              aes(xintercept = xmin),
@@ -118,7 +111,7 @@ fig_genome <- ggplot(res_genome,
              linetype    = "solid",
              colour      = "grey40",
              alpha       = 0.65) +
-  
+
   geom_vline(data        = islands,
              aes(xintercept = xmax),
              inherit.aes = FALSE,
@@ -126,10 +119,10 @@ fig_genome <- ggplot(res_genome,
              linetype    = "solid",
              colour      = "grey40",
              alpha       = 0.65) +
-  
+
   # All genes — small semi-transparent points
   geom_point(size = 1.2, alpha = 0.5) +
-  
+
   # Top-ranked highlighted genes — outlined circles
   geom_point(data   =label_genome,
              aes(fill = Expression),
@@ -138,7 +131,7 @@ fig_genome <- ggplot(res_genome,
              size   = 3.2,
              stroke = 0.5,
              show.legend = FALSE) +
-  
+
   # Gene name labels
   geom_text_repel(data           = label_genome,
                   mapping        = aes(x = Mid_gene, y = logFC,
@@ -152,9 +145,9 @@ fig_genome <- ggplot(res_genome,
                   box.padding    = 0.4,
                   seed           = 42,
                   max.overlaps   = Inf) +
-  
+
   geom_hline(yintercept = 0, linewidth = 0.35, colour = "grey50") +
-  
+
   # ── Colour scale: Expression (point outline colour) ────────────────────────
   scale_colour_manual(
     name   = "Expression",
@@ -168,7 +161,7 @@ fig_genome <- ggplot(res_genome,
     guide  = guide_legend(
       order        = 1,
       override.aes = list(size = 3, alpha = 1, shape = 16)) ) +
-  
+
   # ── Fill scale: island shading (appears in legend) + point fills ──────────
   scale_fill_manual(name   = "Pathogenicity Island",
         values = c(
@@ -189,7 +182,7 @@ fig_genome <- ggplot(res_genome,
         size   = 5,
         shape  = 22    # square swatch — matches shaded rectangle
       ) )) +
-  
+
   scale_x_continuous(
     breaks = function(x) {
       if (max(x, na.rm = TRUE) < 1.5e6)
@@ -200,15 +193,15 @@ fig_genome <- ggplot(res_genome,
     labels = function(x) paste0(x / 1e6, " Mb"),
     expand = expansion(mult = c(0.01, 0.02))
   ) +
-  
+
   facet_wrap(~ Chr, scales = "free_x", ncol = 1) +
-  
+
   labs(
     x      = "Genomic position",
     y      = expression(log[2]~"Fold Change"),
     colour = "Expression"
   ) +
-  
+
   plot_theme +
   theme(
     panel.spacing    = unit(0.6, "lines"),
@@ -224,4 +217,3 @@ fig_genome <- ggplot(res_genome,
 fig_genome
 
 ggsave("1.Final_Paired_results/Fig5_GenomicPosition.png",fig_genome, width = 12, height = 6.5, units = "in", dpi = 1200)
-#-------------------------------------------------------------------------------
